@@ -7,6 +7,7 @@ Official code repository for the paper: [ListT5: Listwise Reranking with Fusion-
 - 2024.10.15 I'm preparing to organize and open-source the training code, but until then, please refer to the comments [here](https://github.com/soyoung97/ListT5/issues/2#issuecomment-2413030507) to get some information about training ListT5.
 - 2024.12.27 I have finally uploaded the training code for ListT5 (and the positional bias experiments)! Thank you for waiting, and feel free to ask any questions! :)
 - 2024.01.05 I have tested if the training code is replicable and left the replication log at README!
+- 2025.11.27 I have added ListT5 + sliding window evaluation code (which corresponds to Fig 4 on our paper) upon request, named sliding\_window\_eval.py
 
 ### Model checkpoints (huggingface)
 1. [RankT5-base](https://huggingface.co/Soyoung97/RankT5-base): `Soyoung97/RankT5-base`
@@ -111,6 +112,17 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python3 train.py --name YOUR_EXP_NAME --do_train --
 T5-3B: (the ListT5-3B model is the one saved with tfmr\_3000)
 ```
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python3 train.py --name YOUR_EXP_NAME --do_train --learning_rate 1e-05 --base_model t5-3b --train_batch_size 2 --eval_batch_size 2 --num_workers 0 --max_input_length 128 --max_output_length 7 --train-files /PATH/To/TRAIN/FILE/marco-train-coco-top1000-5-20perq.jsonl --eval-files /PATH/TO/VALIDATION/FILE/marco-dev-coco-top1000-5-500.jsonl --lr_scheduler linear --run_3b --gradient_accumulation_steps 16 --eval_steps 4000 --num_train_epochs 5 --listwise_k 5
+```
+
+### Replicating ListT5 with sliding windows (Figure 4)
+
+The corresponding code is at `sliding\_window\_eval.py`
+
+```
+# run with stride 2
+CUDA_VISIBLE_DEVICES=2 python sliding_window_eval.py --model_path Soyoung97/ListT5-base --listwise_k 5 --outname sliding2 --sub_mode predefined_5sort --out_k 2 --dataname news --stride 2
+# run with stride 3
+CUDA_VISIBLE_DEVICES=1 python sliding_window_eval.py --model_path Soyoung97/ListT5-base --listwise_k 5 --outname sliding3 --sub_mode predefined_5sort --out_k 2 --dataname dl19 --stride 3
 ```
 
 ## Other tips
