@@ -1,52 +1,65 @@
-# ListT5 Grouping Method Experiment Code
+# ListT5 Combined Experiment Code
 
-This is the Python codebase version of the notebook:
-
-```text
-notebook/listt5_grouping_method_experiment.ipynb
-```
-
-The goal is the same as the notebook: run a small inference-only experiment that
-changes only the ListT5 tournament grouping method and keeps the rest of the
-official ListT5 pipeline unchanged.
-
-## 1. What This Code Tests
-
-The original ListT5 tournament sort uses sequential grouping:
+This is the Python codebase version of:
 
 ```text
-[0, 1, 2, 3, 4], [5, 6, 7, 8, 9], ...
+notebook/listt5_combined_grouping_topk_experiment.ipynb
 ```
 
-This code compares that official grouping with alternative grouping strategies:
+It keeps the original ListT5 reranking pipeline intact and exposes only the two
+experiment knobs from the notebook:
+
+1. grouping method at BM25 top-100
+2. BM25 candidate budget, also called top-k play
+
+No training is done. The code imports the original `ListT5/` implementation and
+subclasses the official evaluator only to swap grouping, set top-k, add progress
+prints, and keep compatibility with newer Kaggle/Transformers environments.
+
+## Default Experiment
+
+The default CLI matches the current combined notebook:
 
 ```text
-sequential      official contiguous grouping
-score_balanced  round-robin grouping by first-stage BM25 rank
-random          seeded random grouping baseline
+datasets          nfcorpus, scifact, arguana, scidocs, fiqa
+max_queries       50
+model             Soyoung97/ListT5-base
+max_input_length  512 for every dataset
+batch_size        20
+listwise_k        5
+out_k             2
+rerank_topk       10
 ```
 
-Everything else stays fixed:
+Default jobs per dataset:
 
 ```text
-model           Soyoung97/ListT5-base
-input           BEIR BM25 top-100 JSONL
-listwise_k      5
-out_k           2
-topk            100
-rerank_topk     10
-metric          NDCG@10 through the original beir_eval.py
-training        none
+grouping experiment:
+  sequential      topk=100
+  score_balanced  topk=100
+
+top-k sweep:
+  sequential      topk=40
+  sequential      topk=60
+  sequential      topk=80
 ```
 
-## 2. Folder Structure
+The top-k sweep applies only to the methods named by `--topk-methods`. By
+default that is `sequential`. To later test score-balanced at smaller BM25
+candidate budgets, pass:
+
+```bash
+python run.py run --topk-methods sequential score_balanced
+```
+
+## Folder Structure
 
 ```text
 Project/ListT5/
-  run_grouping_experiment.py
+  run.py
   README_code_experiment.md
 
-  grouping_method_experiment/
+  combined_experiment/
     __init__.py
     cli.py
     config.py
@@ -54,7 +67,7 @@ Project/ListT5/
     data.py
     evaluator.py
     grouping.py
-    parallel.py
+    jobs.py
     paths.py
     results.py
     runner.py
@@ -67,103 +80,20 @@ Project/ListT5/
     beir_length_mapping.py
 ```
 
-The experiment code is separated from the original ListT5 code. It imports the
-official evaluator and subclasses it instead of editing `run_listt5.py`.
+The entry point is `run.py`.
 
-## 3. Module Responsibilities
+## Install on Kaggle
 
-`config.py`
-
-Defines `ExperimentConfig` and `ExperimentJob`. These hold all experiment knobs,
-such as datasets, strategies, seeds, GPU mode, output directory, and ListT5
-parameters.
-
-`constants.py`
-
-Stores default datasets/strategies and the paper Table 2 ListT5-base BM25
-top-100 NDCG@10 values.
-
-`paths.py`
-
-Finds the experiment root and the original ListT5 code root. This lets the code
-work when launched from `Project/ListT5`, the parent `Project` folder, or with
-`--project-root`.
-
-`runtime.py`
-
-Imports the original ListT5 modules only at runtime and applies compatibility
-patches for newer Kaggle/transformers environments:
-
-```text
-EncoderWrapper.embed_tokens
-CheckpointWrapper.forward
-```
-
-`grouping.py`
-
-Contains the grouping policies:
-
-```text
-sequential_groups
-score_balanced_groups
-random_groups
-```
-
-This is the core experimental variable.
-
-`data.py`
-
-Resolves dataset JSONL files. It checks:
-
-```text
-data/beir-eval-bm25-top100/{dataset}.jsonl
-ListT5/{dataset}.jsonl
-Soyoung97/beir-eval-bm25-top100 on Hugging Face
-```
-
-It also creates `.firstN.jsonl` subset files when `--max-queries` is used.
-
-`evaluator.py`
-
-Builds `GroupingListT5Evaluator`, a subclass of the official
-`ListT5Evaluator`. The subclass overrides only:
-
-```text
-load_model       uses use_safetensors=False
-group2chunks     swaps the grouping strategy
-run_inference    adds plain print progress
-```
-
-`runner.py`
-
-Runs the single-GPU grid and one-job execution path.
-
-`parallel.py`
-
-Runs independent jobs in subprocesses for two-GPU Kaggle sessions. Each
-subprocess gets a GPU through `CUDA_VISIBLE_DEVICES`.
-
-`results.py`
-
-Writes live results and final summary tables.
-
-`cli.py`
-
-Defines the command-line interface.
-
-## 4. Install Requirements
-
-On Kaggle, run:
+Run this in the notebook/session before launching the CLI:
 
 ```bash
 pip install -q pandas jsonlines sentencepiece huggingface_hub beir
 ```
 
-Do not pin an old `transformers` version on Python 3.12 Kaggle kernels. The
-code uses the installed `transformers` and patches the ListT5 compatibility
-issues at runtime.
+Do not pin old `transformers` on Python 3.12 Kaggle kernels. This code uses the
+installed version and patches the ListT5 compatibility issues at runtime.
 
-## 5. Basic Commands
+## Basic Commands
 
 Run from:
 
@@ -171,209 +101,196 @@ Run from:
 Project/ListT5
 ```
 
-Show available Table 2 dataset names:
+Show the default plan without running inference:
 
 ```bash
-python run_grouping_experiment.py show-datasets
+python run.py show-plan
 ```
 
-Run one full Table 2 sanity check on TREC-COVID. Omit `--max-queries` for the
-full run:
+Run the default combined experiment:
 
 ```bash
-python run_grouping_experiment.py run \
-  --datasets trec-covid \
-  --strategies sequential
+python run.py run
 ```
 
-Run the first grouping comparison:
+Run only two datasets:
 
 ```bash
-python run_grouping_experiment.py run \
-  --datasets trec-covid \
-  --strategies sequential score_balanced
+python run.py run --datasets nfcorpus scifact
 ```
 
-Run a quick smoke test:
+Run only the grouping comparison:
 
 ```bash
-python run_grouping_experiment.py run \
-  --datasets trec-covid \
-  --strategies sequential score_balanced \
-  --max-queries 5
+python run.py run --disable-topk
 ```
 
-Subset runs are for debugging only. Do not compare subset metrics to Table 2.
+Run only the top-k sweep:
 
-## 6. Two-GPU Kaggle Mode
+```bash
+python run.py run --disable-grouping
+```
+
+Use full query sets instead of the first 50 queries:
+
+```bash
+python run.py run --max-queries none
+```
+
+Subset runs are useful for sanity checks and runtime control. Do not treat their
+Table 2 deltas as exact reproduction results because Table 2 is full-query,
+BM25 top-100.
+
+## Custom Grouping and Top-K
+
+Grouping methods currently available:
+
+```text
+sequential       official contiguous grouping
+score_balanced   round-robin over BM25 rank positions
+random           seeded random grouping baseline
+```
+
+Choose grouping methods for the top-100 grouping experiment:
+
+```bash
+python run.py run \
+  --grouping-methods sequential score_balanced random \
+  --seeds 0 1 2
+```
+
+Choose the BM25 top-k values for the candidate-budget sweep:
+
+```bash
+python run.py run --topk-values 20 40 60 80
+```
+
+Choose which grouping method the top-k sweep applies to:
+
+```bash
+python run.py run \
+  --topk-methods sequential score_balanced \
+  --topk-values 40 60 80
+```
+
+This means:
+
+```text
+top-k sweep = every method in --topk-methods crossed with every value in --topk-values
+```
+
+The grouping experiment remains controlled separately by:
+
+```text
+--grouping-methods
+--grouping-topk
+```
+
+## Two-GPU Kaggle Mode
+
+Single GPU is the default:
+
+```bash
+python run.py run --gpu-mode single
+```
 
 For two T4 GPUs:
 
 ```bash
-python run_grouping_experiment.py run \
-  --datasets trec-covid nfcorpus fiqa scifact arguana \
-  --strategies sequential score_balanced random \
-  --gpu-mode parallel_2gpu \
-  --gpu-ids 0 1
+python run.py run --gpu-mode parallel_2gpu --gpu-ids 0 1
 ```
 
-This does not split one query across two GPUs. It runs independent jobs in
-parallel:
+This does not split one query across GPUs. It runs independent jobs in separate
+processes:
 
 ```text
-GPU 0 -> one dataset/strategy/seed job
-GPU 1 -> another dataset/strategy/seed job
+GPU 0 -> one dataset / strategy / top-k job
+GPU 1 -> another dataset / strategy / top-k job
 ```
 
-If two-GPU mode fails, rerun with:
+If two-GPU mode fails, rerun with `--gpu-mode single`. Completed JSONL outputs
+are reused automatically.
 
-```bash
---gpu-mode single
-```
+## Output Files
 
-The completed output files are reused automatically, so already finished jobs
-do not need to run inference again.
-
-## 7. Kaggle Notebook Usage
-
-Use this after uploading this modified `Project/ListT5` folder to Kaggle, or
-after cloning a fork that already contains `grouping_method_experiment/` and
-`run_grouping_experiment.py`.
-
-```python
-%cd /kaggle/working/ListT5
-!pip install -q pandas jsonlines sentencepiece huggingface_hub beir
-```
-
-Then run:
-
-```python
-!python run_grouping_experiment.py run --datasets trec-covid --strategies sequential score_balanced
-```
-
-For two GPUs:
-
-```python
-!python run_grouping_experiment.py run \
-  --datasets trec-covid nfcorpus fiqa scifact arguana \
-  --strategies sequential score_balanced random \
-  --gpu-mode parallel_2gpu \
-  --gpu-ids 0 1
-```
-
-If the code is copied somewhere else, pass:
-
-```bash
---project-root /kaggle/working/ListT5
-```
-
-## 8. Output Files
-
-The default output directory is:
+Default output directory:
 
 ```text
-outputs/grouping_method_experiment/
+outputs/combined_grouping_topk/
 ```
 
-Each approach writes reranked output JSONL here:
+Reranked output JSONL:
 
 ```text
-outputs/grouping_method_experiment/{strategy}/seed{seed}/{subset_tag}/{dataset}_output.jsonl
+outputs/combined_grouping_topk/{experiment_kind}/{strategy}/topk{topk}/seed{seed}/{subset}/{dataset}_output.jsonl
 ```
 
-Live result snapshots are saved after every completed approach:
+Live snapshots after every completed job:
 
 ```text
-outputs/grouping_method_experiment/results_live.csv
-outputs/grouping_method_experiment/results_live.txt
+outputs/combined_grouping_topk/results_live.csv
+outputs/combined_grouping_topk/results_live.txt
 ```
 
-Final summary files:
+Final summaries:
 
 ```text
-outputs/grouping_method_experiment/baseline_check.csv
-outputs/grouping_method_experiment/baseline_check.txt
-outputs/grouping_method_experiment/grouping_comparison.csv
-outputs/grouping_method_experiment/grouping_comparison.txt
+outputs/combined_grouping_topk/combined_summary.csv
+outputs/combined_grouping_topk/combined_summary.txt
+outputs/combined_grouping_topk/grouping_view.csv
+outputs/combined_grouping_topk/topk_view.csv
 ```
 
-`baseline_check` is for reproducing Table 2 with `sequential`.
+## Caching and Reuse
 
-`grouping_comparison` is for comparing grouping methods directly. The most
-important columns are:
-
-```text
-score_balanced_minus_sequential
-random_minus_sequential
-```
-
-## 9. Caching and Reuse
-
-There are two layers of reuse.
-
-The first layer is the original ListT5 in-run cache:
+The original ListT5 in-run cache is still used because the code keeps the
+official tournament methods:
 
 ```python
 self.best_cache[tuple(set(index))]
 ```
 
-This is still used because the experiment keeps `run_tournament_sort`,
-`run_one_loop`, `get_out_k`, and `run_batchwise_caching` from the official
-evaluator.
-
-The second layer is output-level reuse. Before running inference, the code
-checks whether the output JSONL already exists and has the same row count as the
-input JSONL. If yes, it skips model inference and reruns only BEIR evaluation.
+The code also has output-level reuse. If the output JSONL already exists and has
+the same row count as the input JSONL, inference is skipped and only BEIR metric
+evaluation is recomputed.
 
 Disable output reuse with:
 
 ```bash
---no-reuse-existing
+python run.py run --no-reuse-existing
 ```
 
-## 10. Reporting Interpretation
-
-Use this order:
-
-1. Run `sequential` fully on at least one dataset.
-2. Check `baseline_check.csv`; the value should be close to Table 2.
-3. Run `score_balanced` on the same dataset.
-4. Report `score_balanced_minus_sequential`.
-5. If reporting `random`, use multiple seeds:
+## Common Kaggle Commands
 
 ```bash
---strategies random --seeds 0 1 2
+cd /kaggle/working/ListT5
+pip install -q pandas jsonlines sentencepiece huggingface_hub beir
+python run.py show-plan
+python run.py run --datasets nfcorpus scifact
 ```
 
-The clean claim is:
+If the original ListT5 code is somewhere else:
+
+```bash
+python run.py run --listt5-code-root /kaggle/working/ListT5/ListT5
+```
+
+If this repository is copied somewhere else:
+
+```bash
+python run.py run --project-root /kaggle/working/ListT5
+```
+
+## Interpretation
+
+For the default setup, the clean report is:
 
 ```text
-Only the grouping phase changed. Model, data, tournament sort, caching, and metric evaluation stayed fixed.
+We keep model, ListT5 tournament reranking, BEIR evaluation, and inference
+settings fixed. We vary either the grouping policy at BM25 top-100 or the BM25
+candidate budget for selected grouping policies.
 ```
 
-## 11. Common Errors
-
-`ModuleNotFoundError: jsonlines`
-
-Run:
-
-```bash
-pip install -q jsonlines sentencepiece huggingface_hub beir
-```
-
-`Failed building wheel for tokenizers`
-
-Avoid pinning old `transformers` versions on Kaggle Python 3.12.
-
-`EncoderWrapper has no attribute embed_tokens`
-
-The code patches this in `runtime.py`. Restart the kernel/process and rerun.
-
-`CheckpointWrapper.forward() takes 4 positional arguments but 7 were given`
-
-The code patches this in `runtime.py`. Restart the kernel/process and rerun.
-
-`KeyError: 'event_id'`
-
-Usually a Kaggle/Jupyter progress display issue. The code prints normal progress
-lines, so check the log output for `[progress]`, `[job start]`, and `[job done]`.
+`score_balanced` is deterministic. The `--seeds` argument matters mainly for
+`random`, or for keeping output paths explicit when you intentionally repeat
+runs.
