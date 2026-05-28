@@ -1,10 +1,8 @@
 \section{Results}
-\label{sec:results}
 
-Because the current setup uses only 50 queries per dataset, the comparison should be read as an early signal rather than a full benchmark result.
-The local baseline is sequential ListT5 with BM25 top-100 under the same 50-query setting.
-Table~\ref{tab:ndcg-results} combines the BM25 top-k and grouping comparisons.
-The sequential columns compare BM25 top-k budgets, while the score-balanced column reports the aligned-cache v2 grouping result at BM25 top-100.
+Because the current setup evaluates only 50 queries per dataset, the results should be interpreted as preliminary evidence rather than a full benchmark. The local baseline is sequential ListT5 with BM25 top-100 under the same 50-query setting.
+
+Table~\ref{tab:ndcg-results} reports the effectiveness results using NDCG@10. The sequential grouping columns compare different BM25 candidate budgets, while the score-balanced column compares the proposed grouping strategy against sequential grouping at BM25 top-100.
 
 \begin{table*}[t]
   \centering
@@ -25,9 +23,7 @@ The sequential columns compare BM25 top-k budgets, while the score-balanced colu
   \label{tab:ndcg-results}
 \end{table*}
 
-Runtime is reported as average seconds per query in Table~\ref{tab:runtime-results}.
-This is more compact than total runtime and stays comparable across datasets and conditions.
-The score-balanced columns separate the original sequential-cache behavior from the v2 strategy-aware cache.
+Runtime is reported in Table~\ref{tab:runtime-results} as average seconds per query. This format is more compact than total runtime and remains comparable across datasets and experimental conditions. For score-balanced grouping, the table separates the original sequential-cache behavior from the strategy-aware cache setting to show the effect of cache alignment on runtime.
 
 \begin{table*}[t]
   \centering
@@ -48,8 +44,7 @@ The score-balanced columns separate the original sequential-cache behavior from 
   \label{tab:runtime-results}
 \end{table*}
 
-Table~\ref{tab:forward-results} reports the number of ListT5 forward calls for the first 50 queries.
-This gives a model-level cost view that is less dependent on runtime noise from the notebook environment.
+Table~\ref{tab:forward-results} reports the number of ListT5 forward calls over the first 50 queries. This provides a model-level cost measure that is less affected by runtime variation from the execution environment.
 
 \begin{table*}[t]
   \centering
@@ -66,6 +61,6 @@ This gives a model-level cost view that is less dependent on runtime noise from 
     FiQA-2018 & 2895 & \textbf{2591} & 3592 & 3865 & 16827 & 7535 \\
     \bottomrule
   \end{tabular}
-  \caption{Number of ListT5 forward calls for the first 50 queries. Bold marks the fewest calls in each row. Lower is better.}
+  \caption{Number of ListT5 forward calls over the first 50 queries. Bold marks the fewest calls in each row. Lower is better.}
   \label{tab:forward-results}
 \end{table*}

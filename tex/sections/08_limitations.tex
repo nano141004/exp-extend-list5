@@ -10,5 +10,4 @@ The BM25 top-k experiment is also limited to sequential grouping, so it should n
 All datasets are also evaluated with a fixed maximum input sequence length of 512 tokens.
 This keeps the run controlled, but it may truncate inputs for datasets that could benefit from longer context.
 
-Finally, runtime measurements can depend on GPU type, batch size, caching, and notebook environment.
-Runtime comparisons should therefore be reported with the hardware and batch size used in the actual run.
+Finally, runtime measurements can depend on GPU type, batch size, caching, and execution environment. Since our runtime results are measured on a Kaggle NVIDIA T4 GPU, they should be interpreted primarily as relative comparisons within the same setup.
