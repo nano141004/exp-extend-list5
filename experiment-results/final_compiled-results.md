@@ -35,6 +35,19 @@ Blank cells mean the raw result is not available yet.
 | SCIDOCS | 1113.192 | 1048.609 | 1452.478 | 1583.861 | 5935.407 | 2851.337 |
 | FiQA-2018 | 1171.617 | 1115.149 | 1536.918 | 1686.409 | 6442.981 | 2835.390 |
 
+## Model Inference Calls: num_forward
+
+`num_forward` is the number of ListT5 `model.generate(...)` calls made during the run.
+It is a useful computational-cost proxy, especially when comparing the v1 and v2 cache behavior.
+
+| Dataset | Seq Top-40 | Seq Top-60 | Seq Top-80 | Seq Top-100 | Score-balanced Top-100 (seq cache / v1) | Score-balanced Top-100 (aligned cache / v2) |
+|---|---:|---:|---:|---:|---:|---:|
+| NFCorpus | 2267 | 2011 | 2780 | 2969 | 11787 |  |
+| SciFact | 2955 | 2616 | 3646 | 3936 | 16628 | 7635 |
+| ArguAna | 3003 | 2628 | 3717 | 3963 | 16563 | 7729 |
+| SCIDOCS | 2970 | 2637 | 3655 | 3934 | 16628 | 7735 |
+| FiQA-2018 | 2895 | 2591 | 3592 | 3865 | 16827 | 7535 |
+
 ## V2 Speed Check
 
 | Dataset | v1 sec/query | v2 sec/query | Speedup (v1 / v2) |
@@ -44,3 +57,13 @@ Blank cells mean the raw result is not available yet.
 | ArguAna | 118.74083 | 60.98355 | 1.95x |
 | SCIDOCS | 118.70814 | 57.02675 | 2.08x |
 | FiQA-2018 | 128.85962 | 56.70781 | 2.27x |
+
+## V2 Forward-Call Reduction
+
+| Dataset | v1 num_forward | v2 num_forward | Reduction (v1 / v2) |
+|---|---:|---:|---:|
+| NFCorpus | 11787 |  |  |
+| SciFact | 16628 | 7635 | 2.18x |
+| ArguAna | 16563 | 7729 | 2.14x |
+| SCIDOCS | 16628 | 7735 | 2.15x |
+| FiQA-2018 | 16827 | 7535 | 2.23x |
