@@ -1,4 +1,35 @@
 \section{Appendix}
 \label{sec:appendix}
 
-Add supplementary details, extended tables, prompts, or additional examples here.
+\subsection{Reproducibility}
+
+The experiments are implemented in the ListT5 project notebooks.
+The v2 notebook contains the strategy-aware caching update used for the score-balanced aligned-cache runs.
+
+The key configuration for the preliminary run is:
+\begin{itemize}
+  \item model: \texttt{Soyoung97/ListT5-base}
+  \item datasets: \texttt{nfcorpus}, \texttt{scifact}, \texttt{arguana}, \texttt{scidocs}, \texttt{fiqa}
+  \item maximum queries per dataset: 50
+  \item maximum input sequence length: 512
+  \item listwise group size: 5
+  \item output size per listwise call: 2
+  \item reranking depth: 10
+  \item BM25 top-k comparison: sequential top-40, top-60, top-80, and top-100
+  \item grouping comparison: sequential top-100 vs score-balanced top-100
+  \item v2 caching check: strategy-aware first-round cache for score-balanced grouping
+\end{itemize}
+
+\subsection{Grouping Example}
+
+With 20 candidates and group size 5, sequential grouping forms:
+\begin{quote}
+\texttt{[1,2,3,4,5]}, \texttt{[6,7,8,9,10]}, \texttt{[11,12,13,14,15]}, \texttt{[16,17,18,19,20]}.
+\end{quote}
+
+Score-balanced grouping forms:
+\begin{quote}
+\texttt{[1,5,9,13,17]}, \texttt{[2,6,10,14,18]}, \texttt{[3,7,11,15,19]}, \texttt{[4,8,12,16,20]}.
+\end{quote}
+
+The implementation uses zero-based candidate indices internally, but the paper describes ranks using one-based indexing for readability.

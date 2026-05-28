@@ -1,0 +1,13 @@
+\section{Future Work}
+\label{sec:future-work}
+
+The immediate next step is to replace the 50-query subset with full-query evaluation on the same five datasets.
+This would make the comparison less sensitive to query sampling and would support stronger conclusions about the BM25 top-k tradeoff.
+
+The score-balanced setting should also be expanded beyond BM25 top-100.
+In the current experiment, smaller top-k values are tested only with sequential grouping, so future runs should evaluate score-balanced grouping at top-40, top-60, and top-80 as well.
+This would separate the effect of grouping from the effect of candidate-pool size.
+
+Another direction is adaptive top-k selection.
+Instead of choosing the same BM25 top-k for every query, the reranking system could select a candidate budget based on query difficulty, BM25 score distribution, or early tournament confidence.
+This may preserve quality for difficult queries while reducing runtime for easier ones.

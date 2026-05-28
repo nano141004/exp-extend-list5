@@ -1,19 +1,71 @@
 \section{Results}
 \label{sec:results}
 
-Report the main quantitative results and compare against the relevant baselines.
-Table~\ref{tab:main-results} shows a compact example layout.
+Because the current setup uses only 50 queries per dataset, the comparison should be read as an early signal rather than a full benchmark result.
+The local baseline is sequential ListT5 with BM25 top-100 under the same 50-query setting.
+Table~\ref{tab:ndcg-results} combines the BM25 top-k and grouping comparisons.
+The sequential columns compare BM25 top-k budgets, while the score-balanced column reports the aligned-cache v2 grouping result at BM25 top-100.
 
-\begin{table}[t]
+\begin{table*}[t]
   \centering
-  \begin{tabular}{lcc}
+  \begin{tabular}{lccccc}
     \toprule
-    Method & Dataset A & Dataset B \\
+    & \multicolumn{4}{c}{Sequential grouping} & \multicolumn{1}{c}{Score-balanced} \\
+    \cmidrule(lr){2-5} \cmidrule(lr){6-6}
+    Dataset & Top-40 & Top-60 & Top-80 & Top-100 & Top-100 \\
     \midrule
-    Baseline & 0.000 & 0.000 \\
-    Proposed & 0.000 & 0.000 \\
+    NFCorpus & 0.33718 & \textbf{0.34292} & 0.34212 & 0.34274 & 0.33855 \\
+    SciFact & 0.72975 & 0.72829 & \textbf{0.73023} & 0.72683 & 0.72262 \\
+    ArguAna & \textbf{0.46052} & 0.44007 & 0.41867 & 0.43436 & 0.41691 \\
+    SCIDOCS & 0.16004 & 0.15644 & \textbf{0.17279} & 0.16678 & 0.16164 \\
+    FiQA-2018 & 0.41760 & 0.43894 & \textbf{0.45958} & 0.45442 & 0.45446 \\
     \bottomrule
   \end{tabular}
-  \caption{Main results. Replace the placeholder values with the reported metric, such as NDCG@10.}
-  \label{tab:main-results}
-\end{table}
+  \caption{NDCG@10 on the first 50 queries of each dataset. Bold marks the highest score in each row.}
+  \label{tab:ndcg-results}
+\end{table*}
+
+Runtime is reported as average seconds per query in Table~\ref{tab:runtime-results}.
+This is more compact than total runtime and stays comparable across datasets and conditions.
+The score-balanced columns separate the original sequential-cache behavior from the v2 strategy-aware cache.
+
+\begin{table*}[t]
+  \centering
+  \begin{tabular}{lcccccc}
+    \toprule
+    & \multicolumn{4}{c}{Sequential grouping} & \multicolumn{2}{c}{Score-balanced top-100} \\
+    \cmidrule(lr){2-5} \cmidrule(lr){6-7}
+    Dataset & Top-40 & Top-60 & Top-80 & Top-100 & Seq. cache & Aligned cache \\
+    \midrule
+    NFCorpus & 17.55 & \textbf{16.49} & 22.61 & 24.88 & 85.54 & 40.89 \\
+    SciFact & 23.48 & \textbf{22.04} & 30.52 & 33.65 & 119.90 & 58.40 \\
+    ArguAna & 22.67 & \textbf{21.15} & 29.61 & 32.27 & 118.74 & 60.98 \\
+    SCIDOCS & 22.26 & \textbf{20.97} & 29.05 & 31.68 & 118.71 & 57.03 \\
+    FiQA-2018 & 23.43 & \textbf{22.30} & 30.74 & 33.73 & 128.86 & 56.71 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Average runtime per query in seconds. Bold marks the fastest setting in each row. Lower is better.}
+  \label{tab:runtime-results}
+\end{table*}
+
+Table~\ref{tab:forward-results} reports the number of ListT5 forward calls for the first 50 queries.
+This gives a model-level cost view that is less dependent on runtime noise from the notebook environment.
+
+\begin{table*}[t]
+  \centering
+  \begin{tabular}{lcccccc}
+    \toprule
+    & \multicolumn{4}{c}{Sequential grouping} & \multicolumn{2}{c}{Score-balanced top-100} \\
+    \cmidrule(lr){2-5} \cmidrule(lr){6-7}
+    Dataset & Top-40 & Top-60 & Top-80 & Top-100 & Seq. cache & Aligned cache \\
+    \midrule
+    NFCorpus & 2267 & \textbf{2011} & 2780 & 2969 & 11787 & 5609 \\
+    SciFact & 2955 & \textbf{2616} & 3646 & 3936 & 16628 & 7635 \\
+    ArguAna & 3003 & \textbf{2628} & 3717 & 3963 & 16563 & 7729 \\
+    SCIDOCS & 2970 & \textbf{2637} & 3655 & 3934 & 16628 & 7735 \\
+    FiQA-2018 & 2895 & \textbf{2591} & 3592 & 3865 & 16827 & 7535 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Number of ListT5 forward calls for the first 50 queries. Bold marks the fewest calls in each row. Lower is better.}
+  \label{tab:forward-results}
+\end{table*}

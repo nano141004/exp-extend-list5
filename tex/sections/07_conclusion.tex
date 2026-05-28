@@ -1,5 +1,8 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-Summarize the main finding and its implications.
-Avoid introducing new evidence in the conclusion.
+We presented a small inference-only study of ListT5-base under a 50-query evaluation setup.
+The current results suggest that reducing BM25 top-k can be competitive with sequential top-100: the best NDCG@10 setting varies by dataset, and top-60 is the fastest setting across all five datasets.
+For the grouping experiment, aligned-cache score-balanced top-100 does not show a clear quality improvement over sequential top-100.
+The caching update is still useful, reducing score-balanced runtime by roughly a factor of two.
+Overall, the strongest immediate signal is that BM25 top-k deserves careful tuning before scaling the grouping comparison to full-query evaluation.
