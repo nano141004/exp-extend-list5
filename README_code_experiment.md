@@ -322,6 +322,18 @@ official tournament methods:
 self.best_cache[tuple(set(index))]
 ```
 
+The code also fixes the first-round precompute cache for custom grouping.
+Official ListT5 batches and caches the first round before the tournament starts,
+but the original implementation hardcodes sequential groups. This package
+precomputes:
+
+```python
+list(self.group2chunks(list(range(topk)), listwise_k))
+```
+
+That means `score_balanced` caches groups such as `{0,20,40,60,80}` before
+`run_one_loop()` asks for them, instead of falling back to slow online forwards.
+
 The code also has output-level reuse. If the output JSONL already exists and has
 the same row count as the input JSONL, inference is skipped and only BEIR metric
 evaluation is recomputed.
@@ -330,6 +342,18 @@ Disable output reuse with:
 
 ```bash
 python run.py run --no-reuse-existing
+```
+
+For the same one-job cache speed check as the v2 notebook, use a fresh output
+directory:
+
+```bash
+python run.py run \
+  --datasets nfcorpus \
+  --disable-topk \
+  --grouping-methods score_balanced \
+  --output-dir outputs/combined_grouping_topk_v2_cli \
+  --no-reuse-existing
 ```
 
 ## Common Kaggle Commands

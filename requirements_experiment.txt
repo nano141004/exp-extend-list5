@@ -3,3 +3,4 @@ jsonlines
 sentencepiece
 huggingface_hub
 beir
+tqdm
