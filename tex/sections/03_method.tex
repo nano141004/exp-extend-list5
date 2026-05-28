@@ -38,5 +38,6 @@ This distributes the BM25 ranking spectrum across groups, so each first-round co
 \paragraph{Strategy-aware first-round caching.}
 The original ListT5 implementation precomputes first-round cache entries for sequential chunks such as ranks 1--5 and 6--10.
 This cache is aligned with sequential grouping, but it does not match score-balanced groups.
-In the v2 notebook, the cache precomputation is updated to generate first-round cache keys from the active grouping policy.
-This keeps the score-balanced experiment comparable to sequential grouping in runtime measurement, because both policies can use cached first-round model outputs for their actual initial groups.
+To ensure a fair runtime comparison, we update the cache precomputation step so that first-round cache keys are generated according to the active grouping policy.
+As a result, both sequential grouping and score-balanced grouping can reuse cached first-round model outputs for the groups they actually evaluate.
+

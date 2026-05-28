@@ -8,9 +8,9 @@ This suggests that increasing the BM25 candidate pool to 100 does not automatica
 For runtime and forward-call count, top-60 is currently the cheapest setting on all five datasets, while top-80 and top-100 are slower and require more model calls.
 
 \paragraph{Grouping effect.}
-The aligned-cache score-balanced top-100 results are available for all five datasets.
-Score-balanced grouping is below sequential top-100 on NFCorpus, SciFact, ArguAna, and SCIDOCS, and nearly tied with sequential top-100 on FiQA-2018.
-Overall, the current results do not show a clear quality advantage for score-balanced grouping.
+Score-balanced grouping performs below sequential top-100 on NFCorpus, SciFact, ArguAna, and SCIDOCS, while producing a nearly tied result on FiQA-2018.
+Overall, these preliminary results do not show a clear effectiveness advantage for score-balanced grouping over sequential grouping.
+
 
 \paragraph{Dataset variation.}
 The best BM25 top-k setting differs by dataset, so we avoid relying only on an average score.
