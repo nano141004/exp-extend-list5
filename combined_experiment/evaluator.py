@@ -42,103 +42,30 @@ def make_combined_evaluator_class(runtime: ListT5Runtime, default_print_every: i
                 i += 1
             return out
 
-        def _sequential_chunks(self, values, n):
-            values = list(values)
-            return [values[i : i + n] for i in range(0, len(values), n)]
+        def get_out_k(self, question, full_ctxs, index, use_cache=True, k=-1):
+            # Fix original ListT5 edge case: k must be resolved before the
+            # all-same early return, otherwise k=-1 returns index[:-1].
+            if k == -1:
+                k = self.args.out_k
+            index = list(index)
+            if len(set(index)) == 1:
+                return index[:k]
+            index.sort()
+            cache_key = tuple(set(index))
+            if use_cache and self.best_cache.get(cache_key) is not None:
+                return self.best_cache.get(cache_key)[-k:]
 
-        def _finalize_loop_fallback(self, question, topk_ctxs, full_list_idx):
-            unique_idx = self.remove_duplicates(list(full_list_idx))
-            if len(unique_idx) == 0:
-                return full_list_idx[0]
-            if len(unique_idx) == 1:
-                return unique_idx[0]
-            if len(unique_idx) < self.args.listwise_k:
-                other_index = self.get_leftover_idx(
-                    unique_idx,
-                    self.args.listwise_k - len(unique_idx),
-                    list(range(len(topk_ctxs))),
-                )
-                return self.get_out_k(question, topk_ctxs, unique_idx + other_index)[-1]
-            return self.get_out_k(question, topk_ctxs, unique_idx[: self.args.listwise_k])[-1]
-
-        def run_one_loop(
-            self,
-            question,
-            topk_ctxs,
-            full_list_idx,
-            _depth=0,
-            _seen=None,
-            _force_sequential=False,
-        ):
-            if _seen is None:
-                _seen = set()
-
-            state = (tuple(full_list_idx), bool(_force_sequential))
-            if state in _seen or _depth >= 25:
-                if not _force_sequential:
-                    print(
-                        "[recursion guard] switching recursive aggregation to sequential grouping",
-                        flush=True,
-                    )
-                    return self.run_one_loop(
-                        question,
-                        topk_ctxs,
-                        self.remove_duplicates(list(full_list_idx)),
-                        _depth=0,
-                        _seen=set(),
-                        _force_sequential=True,
-                    )
-                print("[recursion guard] using final duplicate-safe fallback", flush=True)
-                return self._finalize_loop_fallback(question, topk_ctxs, full_list_idx)
-            _seen.add(state)
-
-            saved_index = []
-            if (self.args.out_k * 2) > self.args.listwise_k:
-                full_list_idx = self.remove_duplicates(full_list_idx)
-
-            if _force_sequential:
-                grouped_list_idxs = self._sequential_chunks(full_list_idx, self.args.listwise_k)
-            else:
-                grouped_list_idxs = list(self.group2chunks(full_list_idx, n=self.args.listwise_k))
-
-            for cut_list in grouped_list_idxs:
-                if len(cut_list) < self.args.listwise_k:
-                    other_index = self.get_leftover_idx(
-                        cut_list,
-                        self.args.listwise_k - len(cut_list),
-                        full_list_idx,
-                    )
-                    saved_index += self.get_out_k(question, topk_ctxs, cut_list + other_index)
-                else:
-                    if len(set(cut_list)) == 1:
-                        saved_index.append(cut_list[0])
-                    else:
-                        saved_index += self.get_out_k(question, topk_ctxs, cut_list)
-
-            if len(saved_index) < self.args.listwise_k:
-                other_index = self.get_leftover_idx(
-                    saved_index,
-                    self.args.listwise_k - len(saved_index),
-                    full_list_idx,
-                )
-                full_index = saved_index + other_index
-                topk_out = self.get_out_k(question, topk_ctxs, full_index)
-                return topk_out[-1]
-            if len(saved_index) > self.args.listwise_k:
-                next_index = saved_index
-                if _force_sequential:
-                    next_index = self.remove_duplicates(list(saved_index))
-                return self.run_one_loop(
-                    question,
-                    topk_ctxs,
-                    next_index,
-                    _depth=_depth + 1,
-                    _seen=_seen,
-                    _force_sequential=_force_sequential,
-                )
-            if len(saved_index) == 1:
-                return saved_index[0]
-            return self.get_out_k(question, topk_ctxs, saved_index)[-1]
+            ctxs = [full_ctxs[x] for x in index]
+            full_input_texts = self.make_listwise_text(question, ctxs)
+            input_tensors = self.make_input_tensors(full_input_texts)
+            output = self.run_inference(input_tensors)
+            out_k_rel_index = self.get_rel_index(output, k=k)[0]
+            try:
+                out_k_def_index = [index[x - 1] for x in out_k_rel_index]
+            except IndexError:
+                out_k_def_index = index[-k:]
+            self.best_cache[cache_key] = out_k_def_index
+            return out_k_def_index
 
         def run_batchwise_caching(self, batch_holder):
             """Precompute first-round cache using the active grouping strategy."""

@@ -334,6 +334,12 @@ list(self.group2chunks(list(range(topk)), listwise_k))
 That means `score_balanced` caches groups such as `{0,20,40,60,80}` before
 `run_one_loop()` asks for them, instead of falling back to slow online forwards.
 
+The evaluator also fixes a small original ListT5 edge case in `get_out_k`.
+When all candidate indices are the same, the original method returned
+`index[:k]` before resolving `k=-1` to `out_k`, which can return `index[:-1]`
+and prevent recursive aggregation from shrinking on duplicate-heavy NFCorpus
+queries.
+
 The code also has output-level reuse. If the output JSONL already exists and has
 the same row count as the input JSONL, inference is skipped and only BEIR metric
 evaluation is recomputed.
