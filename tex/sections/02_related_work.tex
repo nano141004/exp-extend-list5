@@ -1,4 +1,10 @@
 \section{Related Work}
 \label{sec:related-work}
 
-Discuss the most relevant prior work and explain how this paper differs from it.
+Listwise reranking processes multiple candidate passages together so the model can compare candidates within the same inference call.
+ListT5 implements this idea with an FiD architecture, where multiple query--passage inputs are encoded separately and decoded into an ordered list of passage identifiers \citep{izacard2021leveraging,yoon2024listt5}.
+To make this practical for reranking a larger candidate pool, ListT5 uses an m-ary tournament sort with output caching.
+
+Our study is a small extension of this inference pipeline.
+We do not modify the ListT5 architecture, retrain the model, or introduce a new reranking objective.
+Instead, we study two practical inference choices: how many BM25 candidates should be passed to ListT5, and how those candidates should be grouped before the first tournament round.

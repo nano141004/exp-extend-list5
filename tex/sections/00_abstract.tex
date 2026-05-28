@@ -1,4 +1,7 @@
 \begin{abstract}
-Briefly summarize the problem, method, experimental setup, and main finding.
-Keep the abstract concise and self-contained.
+This paper presents a preliminary inference-only study of ListT5 reranking.
+We examine two practical choices in the reranking pipeline: the BM25 top-k candidate budget and the first-round grouping policy used before ListT5 tournament reranking.
+Using ListT5-base without additional training, we evaluate 50-query subsets of NFCorpus, SciFact, ArguAna, SCIDOCS, and FiQA-2018 with a fixed 512-token input cap.
+In the current results, sequential top-100 is not consistently the strongest setting; smaller BM25 candidate pools often match or improve NDCG@10 while reducing runtime.
+The score-balanced top-100 runs do not show a clear quality gain over sequential grouping, although strategy-aware caching substantially reduces their runtime.
 \end{abstract}

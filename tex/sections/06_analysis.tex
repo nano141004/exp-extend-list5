@@ -1,4 +1,24 @@
 \section{Analysis}
 \label{sec:analysis}
 
-Include ablations, error analysis, sensitivity analysis, or qualitative examples that explain the main result.
+\paragraph{BM25 top-k tradeoff.}
+The current results show that sequential top-100 is not consistently the strongest setting on the 50-query subsets.
+Top-80 gives the highest NDCG@10 on SciFact, SCIDOCS, and FiQA-2018, while top-40 is highest on ArguAna and top-60 is slightly highest on NFCorpus.
+This suggests that increasing the BM25 candidate pool to 100 does not automatically improve the early ListT5 reranking result under this small-query setup.
+For runtime and forward-call count, top-60 is currently the cheapest setting on all five datasets, while top-80 and top-100 are slower and require more model calls.
+
+\paragraph{Grouping effect.}
+The aligned-cache score-balanced top-100 results are available for all five datasets.
+Score-balanced grouping is below sequential top-100 on NFCorpus, SciFact, ArguAna, and SCIDOCS, and nearly tied with sequential top-100 on FiQA-2018.
+Overall, the current results do not show a clear quality advantage for score-balanced grouping.
+
+\paragraph{Dataset variation.}
+The best BM25 top-k setting differs by dataset, so we avoid relying only on an average score.
+For example, ArguAna favors a much smaller top-40 candidate set in the current table, while SCIDOCS and FiQA-2018 favor top-80.
+This variation is consistent with the paper's framing as a preliminary diagnostic study rather than a final benchmark result.
+
+\paragraph{Caching effect.}
+The strategy-aware cache substantially reduces score-balanced runtime across all five datasets.
+Aligned caching is roughly two times faster than using the original sequential-cache behavior.
+The forward-call counts show the same trend: aligned caching reduces score-balanced model calls by about two times compared with the original sequential-cache behavior.
+However, score-balanced top-100 remains slower than sequential top-100 and much slower than the fastest sequential top-k setting in the current runs.

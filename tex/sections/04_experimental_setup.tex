@@ -1,5 +1,43 @@
 \section{Experimental Setup}
 \label{sec:experimental-setup}
 
-Describe datasets, baselines, evaluation metrics, model checkpoints, hyperparameters, and implementation details.
-For reproducibility, include enough information about preprocessing and inference settings.
+\subsection{Datasets}
+
+We use five BEIR datasets \citep{thakur2021beir}: NFCorpus, SciFact, ArguAna, SCIDOCS, and FiQA-2018.
+These datasets cover scientific, biomedical, argument retrieval, citation-related, and financial question-answering retrieval settings.
+The current notebook uses the first 50 queries from each dataset to keep the early experiment practical on Kaggle.
+Table~\ref{tab:datasets} lists the dataset identifiers used by the code.
+
+\begin{table}[t]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Dataset & Code name \\
+    \midrule
+    NFCorpus & \texttt{nfcorpus} \\
+    SciFact & \texttt{scifact} \\
+    ArguAna & \texttt{arguana} \\
+    SCIDOCS & \texttt{scidocs} \\
+    FiQA-2018 & \texttt{fiqa} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Datasets used in the 50-query early experiment.}
+  \label{tab:datasets}
+\end{table}
+
+\subsection{Model and Inference Settings}
+
+All experiments use the public \texttt{Soyoung97/ListT5-base} checkpoint.
+The input candidates are BM25 top-100 files from the BEIR-format dataset repository used by the ListT5 codebase.
+The fixed ListT5 settings are listwise group size $m=5$, output size $r=2$, reranking depth 10, maximum input sequence length 512, and NDCG@10 evaluation.
+The 512-token cap is applied to every dataset to keep the early run consistent and practical in the low-resource notebook setting.
+For the BM25 top-k experiment, the input top-k value is changed to 40, 60, or 80 and compared with sequential top-100 as the local baseline.
+
+\subsection{Compared Conditions}
+
+The experiment grid has two parts.
+First, the BM25 top-k comparison evaluates sequential grouping at BM25 top-40, top-60, top-80, and top-100.
+Second, the grouping comparison evaluates sequential and score-balanced grouping at BM25 top-100.
+Sequential top-100 is reused as the local baseline in both comparisons, so the full grid has five jobs per dataset: sequential top-40, top-60, top-80, top-100, and score-balanced top-100.
+The reported runs were mainly executed from notebooks for Kaggle-style experimentation.
+The repository also contains a Python codebase version of the grouping experiment, which can be used when moving the workflow from interactive runs to scripted execution.

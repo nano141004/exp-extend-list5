@@ -2,7 +2,7 @@
 
 % Use [review] for anonymous submission, [preprint] for a non-anonymous preprint
 % with page numbers, and no option for camera-ready/final versions.
-\usepackage[review]{acl}
+\usepackage[preprint]{acl}
 
 \usepackage{times}
 \usepackage{latexsym}
@@ -14,15 +14,15 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 
-\title{Title of Your ACL Paper}
+\title{A Preliminary Study of Grouping Strategies for ListT5 Reranking}
 
 % For anonymous review, ACL will hide author information in review mode.
-\author{First Author \\
-  Affiliation \\
-  \texttt{email@domain} \\\And
-  Second Author \\
-  Affiliation \\
-  \texttt{email@domain} \\}
+\author{Mariano Gerardus Senduk\thanks{These authors contributed equally to this work.} \\
+  Universitas Indonesia \\
+  \texttt{mariano.gerardus@ui.ac.id} \\\And
+  Narendra Dzulqarnain\footnotemark[1] \\
+  Universitas Indonesia \\
+  \texttt{narendra.dzulqarnain@ui.ac.id} \\}
 
 \begin{document}
 \maketitle
@@ -34,10 +34,12 @@
 \input{sections/04_experimental_setup}
 \input{sections/05_results}
 \input{sections/06_analysis}
+\input{sections/07_future_work}
 \input{sections/07_conclusion}
 \input{sections/08_limitations}
 \input{sections/09_ethics_statement}
-\input{sections/10_acknowledgments}
+% Uncomment for a camera-ready version if acknowledgments are needed.
+% \input{sections/10_acknowledgments}
 
 \bibliography{custom}
 

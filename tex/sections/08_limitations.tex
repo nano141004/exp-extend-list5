@@ -1,3 +1,14 @@
 \section*{Limitations}
 
-Discuss known limitations, including assumptions, dataset coverage, computational constraints, and cases where the method may fail.
+This is a preliminary experiment and uses only the first 50 queries from each dataset.
+The results should not be reported as a reproduction of the full BEIR benchmark.
+The subset may overrepresent or underrepresent difficult queries, and the variance may be large.
+
+The study changes only inference-time grouping.
+It does not retrain ListT5, tune hyperparameters, or test whether the model would learn different behavior if trained with score-balanced groups.
+The BM25 top-k experiment is also limited to sequential grouping, so it should not be interpreted as a complete search over grouping and top-k combinations.
+All datasets are also evaluated with a fixed maximum input sequence length of 512 tokens.
+This keeps the run controlled, but it may truncate inputs for datasets that could benefit from longer context.
+
+Finally, runtime measurements can depend on GPU type, batch size, caching, and notebook environment.
+Runtime comparisons should therefore be reported with the hardware and batch size used in the actual run.

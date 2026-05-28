@@ -1,0 +1,3 @@
+dataset,strategy,queries,bm25_mean_nDCG@10,listt5_mean_nDCG@10,mean_calls/query,total_forwards,time_sec
+nfcorpus,score_balanced,50,0.2994329563334844,0.3384526054639452,235.74,11787,4276.94
+scifact,score_balanced,50,0.6622607648061962,0.7159978016882107,332.56,16628,5995.07

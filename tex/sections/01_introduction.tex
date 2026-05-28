@@ -1,5 +1,26 @@
 \section{Introduction}
 \label{sec:introduction}
 
-State the research problem, why it matters, and the central claim of the paper.
-End this section with a short summary of contributions.
+ListT5 is a listwise reranker that uses Fusion-in-Decoder (FiD) with a tournament-style inference procedure to rerank candidates from a first-stage retriever \citep{yoon2024listt5}.
+The original ListT5 work studies model design, training, efficiency, and retrieval performance.
+This paper takes a smaller follow-up direction: we keep the released ListT5-base model fixed and examine two inference-time choices in the reranking pipeline.
+
+The first choice is the BM25 candidate budget.
+The standard ListT5 evaluation reranks BM25 top-100 candidates, but smaller candidate pools can reduce the number of listwise comparisons and may be more practical in limited compute settings.
+We therefore compare sequential ListT5 reranking with BM25 top-40, top-60, top-80, and top-100 candidates.
+In this paper, sequential top-100 is the local baseline because all runs use the same 50-query subset.
+
+The second choice is the first-round grouping policy.
+In the original implementation, candidates are grouped sequentially by BM25 rank.
+With listwise group size five, candidates ranked 1--5 are compared together, candidates ranked 6--10 are compared together, and so on.
+We explore a score-balanced alternative that distributes BM25 ranks across groups, such as grouping ranks 1, 21, 41, 61, and 81 together when reranking top-100 candidates.
+This does not change the model or candidate set; it only changes how candidates are arranged before the tournament comparisons.
+
+The experiment is intentionally lightweight.
+We use the public ListT5-base checkpoint, evaluate the first 50 queries per dataset, cap inputs at 512 tokens, and report both NDCG@10 and runtime.
+The current manuscript is structured around two questions:
+
+\begin{enumerate}
+  \item How does reducing the BM25 candidate budget from top-100 to top-80, top-60, or top-40 affect sequential ListT5 reranking?
+  \item Under the same 50-query setup, how does score-balanced grouping compare with sequential grouping at BM25 top-100?
+\end{enumerate}

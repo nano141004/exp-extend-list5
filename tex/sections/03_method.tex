@@ -1,5 +1,42 @@
 \section{Method}
 \label{sec:method}
 
-Describe the proposed method clearly enough for readers to reproduce it.
-Define notation and keep implementation details that are not central to the method in Section~\ref{sec:experimental-setup} or the appendix.
+Let $C = [c_1, c_2, \ldots, c_k]$ be the candidate list returned by BM25, sorted from highest to lowest BM25 score.
+ListT5 reranks this list by repeatedly applying a listwise model to groups of size $m$.
+In our experiments, $m=5$ and the model outputs $r=2$ selected candidates per listwise call, matching the released ListT5-base setup.
+
+\subsection{BM25 Top-k Setting}
+\label{sec:bm25-topk}
+
+The first experiment changes the number of BM25 candidates passed to ListT5.
+We evaluate sequential ListT5 reranking with $k \in \{40, 60, 80, 100\}$.
+This directly tests the quality--runtime tradeoff of reducing the first-stage candidate pool while leaving the ListT5 model and grouping policy unchanged.
+
+\subsection{Sequential Grouping}
+\label{sec:sequential-grouping}
+
+The baseline grouping policy is the original ListT5 behavior.
+Candidates are split into contiguous chunks:
+\begin{equation}
+G_i = [c_{(i-1)m+1}, \ldots, c_{im}].
+\end{equation}
+For BM25 top-100 with $m=5$, this creates 20 first-round groups.
+This policy keeps neighboring BM25 ranks together and is used as the main comparison point throughout the experiment.
+
+\subsection{Score-Balanced Grouping}
+\label{sec:score-balanced-grouping}
+
+The proposed tweak keeps the same candidate list and the same group size, but changes how the first-round groups are formed.
+Let $n_g = \lceil k/m \rceil$ be the number of groups.
+Candidates are assigned in round-robin order by BM25 rank:
+\begin{equation}
+c_j \rightarrow G_{((j-1) \bmod n_g) + 1}.
+\end{equation}
+For BM25 top-100 and $m=5$, the first group receives ranks 1, 21, 41, 61, and 81; the second group receives ranks 2, 22, 42, 62, and 82; and so on.
+This distributes the BM25 ranking spectrum across groups, so each first-round comparison contains one high-ranked candidate and several lower-ranked candidates.
+
+\paragraph{Strategy-aware first-round caching.}
+The original ListT5 implementation precomputes first-round cache entries for sequential chunks such as ranks 1--5 and 6--10.
+This cache is aligned with sequential grouping, but it does not match score-balanced groups.
+In the v2 notebook, the cache precomputation is updated to generate first-round cache keys from the active grouping policy.
+This keeps the score-balanced experiment comparable to sequential grouping in runtime measurement, because both policies can use cached first-round model outputs for their actual initial groups.

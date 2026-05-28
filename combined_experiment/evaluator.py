@@ -29,6 +29,44 @@ def make_combined_evaluator_class(runtime: ListT5Runtime, default_print_every: i
                 raise ValueError(f"Unknown grouping strategy: {strategy}")
             yield from GROUPING_POLICIES[strategy](l, n, seed=seed)
 
+        def get_leftover_idx(self, exclude, k, full_list):
+            out = []
+            i = 0
+            exclude = list(set(exclude + self.global_exclude))
+            allow_exclude = set(full_list) - set(exclude) == set()
+            while len(out) != k:
+                if i == len(full_list):
+                    i = 0
+                if allow_exclude or (full_list[i] not in exclude):
+                    out.append(full_list[i])
+                i += 1
+            return out
+
+        def get_out_k(self, question, full_ctxs, index, use_cache=True, k=-1):
+            # Fix original ListT5 edge case: k must be resolved before the
+            # all-same early return, otherwise k=-1 returns index[:-1].
+            if k == -1:
+                k = self.args.out_k
+            index = list(index)
+            if len(set(index)) == 1:
+                return index[:k]
+            index.sort()
+            cache_key = tuple(set(index))
+            if use_cache and self.best_cache.get(cache_key) is not None:
+                return self.best_cache.get(cache_key)[-k:]
+
+            ctxs = [full_ctxs[x] for x in index]
+            full_input_texts = self.make_listwise_text(question, ctxs)
+            input_tensors = self.make_input_tensors(full_input_texts)
+            output = self.run_inference(input_tensors)
+            out_k_rel_index = self.get_rel_index(output, k=k)[0]
+            try:
+                out_k_def_index = [index[x - 1] for x in out_k_rel_index]
+            except IndexError:
+                out_k_def_index = index[-k:]
+            self.best_cache[cache_key] = out_k_def_index
+            return out_k_def_index
+
         def run_batchwise_caching(self, batch_holder):
             """Precompute first-round cache using the active grouping strategy."""
             try:

@@ -1,5 +1,0 @@
-dataset,strategy,queries,bm25_mean_nDCG@10,listt5_mean_nDCG@10,mean_calls/query,total_forwards,time_sec
-trec-covid,sequential,10,0.5078034562947711,0.7455985384638806,95.0,950,325.32
-trec-covid,score_balanced,10,0.5078034562947711,0.7471489538651983,334.6,3346,1143.91
-scifact,sequential,10,0.95,0.9630929753571458,98.5,985,338.0
-scifact,score_balanced,10,0.95,0.9630929753571458,334.8,3348,1147.59
