@@ -2,6 +2,13 @@
 ## Group Member
 - Mariano Gerardus Senduk (2206814236)
 - Narendra Dzulqarnain (2206081881)
+
+## Current Status
+
+We have implemented the code for the grouping-strategy extension and tested the pipeline on a small scale. The current implementation compares the original-like sequential grouping with our score-balanced grouping during ListT5 tournament reranking.
+
+The small-scale test run is intended to validate that the inference pipeline, candidate grouping logic, and evaluation flow work correctly before running a larger experiment. For the current progress report, implementation details and preliminary results are documented in [progress_report.md](progress_report.md).
+
 ## Credit
 
 This project is an extension of the original ListT5 work by Yoon et al.:
