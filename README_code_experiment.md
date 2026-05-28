@@ -82,12 +82,84 @@ Project/ListT5/
 
 The entry point is `run.py`.
 
+## Environment Setup
+
+This experiment is inference-only, so use the lightweight experiment
+requirements:
+
+```text
+requirements_experiment.txt
+```
+
+Do not use `ListT5/requirements.txt` unless you are reproducing the original
+training environment. It pins older packages and includes training-only
+dependencies that are unnecessary for this code.
+
+### Option A: uv, Lightweight Local Setup
+
+This is the cleanest local setup when `uv` is available:
+
+```bash
+cd Project/ListT5
+uv venv .venv
+.venv\Scripts\activate
+uv pip install -r requirements_experiment.txt
+python run.py show-plan
+```
+
+On Linux/Kaggle-style shells:
+
+```bash
+cd Project/ListT5
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements_experiment.txt
+python run.py show-plan
+```
+
+### Option B: Standard venv + pip
+
+Use this if `uv` is not installed:
+
+```bash
+cd Project/ListT5
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install -U pip
+python -m pip install -r requirements_experiment.txt
+python run.py show-plan
+```
+
+On Linux/Kaggle-style shells:
+
+```bash
+cd Project/ListT5
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -r requirements_experiment.txt
+python run.py show-plan
+```
+
+### Option C: No venv
+
+This is acceptable on Kaggle or a disposable environment:
+
+```bash
+cd Project/ListT5
+python -m pip install -r requirements_experiment.txt
+python run.py show-plan
+```
+
+If `torch` and `transformers` are already installed by the runtime, keep them.
+Do not downgrade them just for this experiment.
+
 ## Install on Kaggle
 
 Run this in the notebook/session before launching the CLI:
 
 ```bash
-pip install -q pandas jsonlines sentencepiece huggingface_hub beir
+pip install -q -r requirements_experiment.txt
 ```
 
 Do not pin old `transformers` on Python 3.12 Kaggle kernels. This code uses the
@@ -250,6 +322,18 @@ official tournament methods:
 self.best_cache[tuple(set(index))]
 ```
 
+The code also fixes the first-round precompute cache for custom grouping.
+Official ListT5 batches and caches the first round before the tournament starts,
+but the original implementation hardcodes sequential groups. This package
+precomputes:
+
+```python
+list(self.group2chunks(list(range(topk)), listwise_k))
+```
+
+That means `score_balanced` caches groups such as `{0,20,40,60,80}` before
+`run_one_loop()` asks for them, instead of falling back to slow online forwards.
+
 The code also has output-level reuse. If the output JSONL already exists and has
 the same row count as the input JSONL, inference is skipped and only BEIR metric
 evaluation is recomputed.
@@ -260,11 +344,23 @@ Disable output reuse with:
 python run.py run --no-reuse-existing
 ```
 
+For the same one-job cache speed check as the v2 notebook, use a fresh output
+directory:
+
+```bash
+python run.py run \
+  --datasets nfcorpus \
+  --disable-topk \
+  --grouping-methods score_balanced \
+  --output-dir outputs/combined_grouping_topk_v2_cli \
+  --no-reuse-existing
+```
+
 ## Common Kaggle Commands
 
 ```bash
 cd /kaggle/working/ListT5
-pip install -q pandas jsonlines sentencepiece huggingface_hub beir
+pip install -q -r requirements_experiment.txt
 python run.py show-plan
 python run.py run --datasets nfcorpus scifact
 ```
