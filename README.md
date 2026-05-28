@@ -59,9 +59,8 @@ Project/ListT5/
     Python CLI/package version of the experiment.
 
   notebook/
-    listt5_combined_grouping_topk_experiment.ipynb
     listt5_combined_grouping_topk_experiment_v2.ipynb
-    progress/
+    docs/
 
   experiment-results/
     final_compiled-results.md
