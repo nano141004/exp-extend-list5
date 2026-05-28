@@ -29,6 +29,19 @@ def make_combined_evaluator_class(runtime: ListT5Runtime, default_print_every: i
                 raise ValueError(f"Unknown grouping strategy: {strategy}")
             yield from GROUPING_POLICIES[strategy](l, n, seed=seed)
 
+        def get_leftover_idx(self, exclude, k, full_list):
+            out = []
+            i = 0
+            exclude = list(set(exclude + self.global_exclude))
+            allow_exclude = set(full_list) - set(exclude) == set()
+            while len(out) != k:
+                if i == len(full_list):
+                    i = 0
+                if allow_exclude or (full_list[i] not in exclude):
+                    out.append(full_list[i])
+                i += 1
+            return out
+
         def run_batchwise_caching(self, batch_holder):
             """Precompute first-round cache using the active grouping strategy."""
             try:
