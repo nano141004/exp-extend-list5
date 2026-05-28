@@ -3,7 +3,7 @@
 This is the Python codebase version of:
 
 ```text
-notebook/listt5_combined_grouping_topk_experiment.ipynb
+notebook/listt5_combined_grouping_topk_experiment_v2.ipynb
 ```
 
 It keeps the original ListT5 reranking pipeline intact and exposes only the two
@@ -13,12 +13,13 @@ experiment knobs from the notebook:
 2. BM25 candidate budget, also called top-k play
 
 No training is done. The code imports the original `ListT5/` implementation and
-subclasses the official evaluator only to swap grouping, set top-k, add progress
-prints, and keep compatibility with newer Kaggle/Transformers environments.
+subclasses the official evaluator only to swap grouping, set top-k, print compact
+runtime status, and keep compatibility with newer Kaggle/Transformers environments.
 
-## Default Experiment
+## Default CLI Experiment
 
-The default CLI matches the current combined notebook:
+The default CLI runs the full combined experiment grid used for the final
+compiled results:
 
 ```text
 datasets          nfcorpus, scifact, arguana, scidocs, fiqa
@@ -44,6 +45,10 @@ top-k sweep:
   sequential      topk=80
 ```
 
+The notebook file `notebook/listt5_combined_grouping_topk_experiment_v2.ipynb`
+may be configured as a smaller smoke/cache-check run while debugging on Kaggle.
+Use `python run.py show-plan` as the source of truth for the CLI grid.
+
 The top-k sweep applies only to the methods named by `--topk-methods`. By
 default that is `sequential`. To later test score-balanced at smaller BM25
 candidate budgets, pass:
@@ -58,6 +63,7 @@ python run.py run --topk-methods sequential score_balanced
 Project/ListT5/
   run.py
   README_code_experiment.md
+  requirements_experiment.txt
 
   combined_experiment/
     __init__.py
@@ -72,6 +78,17 @@ Project/ListT5/
     results.py
     runner.py
     runtime.py
+
+  notebook/
+    listt5_combined_grouping_topk_experiment_v2.ipynb
+    docs/
+
+  experiment-results/
+    final_compiled-results.md
+    raw/
+
+  tex/
+    report source files
 
   ListT5/
     run_listt5.py
