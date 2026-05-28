@@ -1,0 +1,5 @@
+pandas
+jsonlines
+sentencepiece
+huggingface_hub
+beir
